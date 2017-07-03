@@ -2,14 +2,23 @@
 
 # 1-based index in this program.
 # Sample command:
-# python3 SSeq_merged.vcf2tsv.py -myvcf BINA.snp.vcf -sniper somaticsniper/variants.vcf -varscan varscan2/variants.snp.vcf -jsm jointsnvmix2/variants.vcf -vardict vardict/variants.snp.vcf.gz -muse muse/variants.vcf -nbam normal.indelrealigned.bam -tbam tumor.indelrealigned.bam -ref human_g1k_v37_decoy.fasta -outfile SSeq2.snp.tsv
+# python3 SSeq_merged.vcf2tsv.py -myvcf BINA.snp.vcf \
+#    -sniper somaticsniper/variants.vcf \
+#    -varscan varscan2/variants.snp.vcf \
+#    -jsm jointsnvmix2/variants.vcf \
+#    -vardict vardict/variants.snp.vcf.gz \
+#    -muse muse/variants.vcf \
+#    -nbam normal.indelrealigned.bam \
+#    -tbam tumor.indelrealigned.bam \
+#    -ref human_g1k_v37_decoy.fasta \
+#    -outfile SSeq2.snp.tsv
 
 ### Improvement since the 2015 Genome Biology publication:
   # Supports MuSE, LoFreq, Scalpel
   # Allow +/- INDEL lengh for insertion and deletion
   # Uses pysam to extract information directly from BAM files, e.g., flanking indel, edit distance, discordance, etc.
-  # Implement optional minimal mapping quality (MQ) and base call quality (BQ) filter, for which pysam considers the reads in BAM files. 
-  # Allow user to count only non-duplicate reads if -dedup option is invoked. 
+  # Implement optional minimal mapping quality (MQ) and base call quality (BQ) filter, for which pysam considers the reads in BAM files.
+  # Allow user to count only non-duplicate reads if -dedup option is invoked.
   # Allow handling of VCF files with multiple lines (i.e., different variants) at the same chromosome coordinates, as well as ALT columns with multiple ALT calls.
   # Deprecated HaplotypeCaller and SAMTools dependencies
   # Get useful metrics from MuTect2
@@ -21,7 +30,7 @@ import regex as re
 import scipy.stats as stats
 import genomic_file_handlers as genome
 import pileup_reader as pileup
-from read_info_extractor import * 
+from read_info_extractor import *
 from copy import copy
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -127,14 +136,14 @@ def rescale(x, original=None, rescale_to=p_scale, max_phred=1001):
         y = genome.phred2p(x)
         y = '%.2f' % y
     return y
-    
+
 
 # Define NaN and Inf:
 nan = float('nan')
 inf = float('inf')
 pattern_chr_position = genome.pattern_chr_position
 
-# Normal/Tumor index in the Merged VCF file, or any other VCF file that puts NORMAL first. 
+# Normal/Tumor index in the Merged VCF file, or any other VCF file that puts NORMAL first.
 idxN,idxT = 0,1
 
 # Normal/Tumor index in VarDict VCF, or any other VCF file that puts TUMOR first.
@@ -253,19 +262,19 @@ out_header = \
 
 ## Running
 with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
-        
+
     my_line = my_sites.readline().rstrip()
-    
+
     nbam    = pysam.AlignmentFile(nbam_fn)
     tbam    = pysam.AlignmentFile(tbam_fn)
     ref_fa  = pysam.FastaFile(ref_fa)
-    
+
     if truth:
         truth = genome.open_textfile(truth)
         truth_line = truth.readline().rstrip()
         while truth_line.startswith('#'):
             truth_line = truth.readline().rstrip()
-    
+
     if cosmic:
         cosmic = genome.open_textfile(cosmic)
         cosmic_line = cosmic.readline().rstrip()
@@ -277,7 +286,7 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
         dbsnp_line = dbsnp.readline().rstrip()
         while dbsnp_line.startswith('#'):
             dbsnp_line = dbsnp.readline().rstrip()
-    
+
     if mutect:
         mutect = genome.open_textfile(mutect)
         mutect_line = mutect.readline().rstrip()
@@ -289,75 +298,75 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
         strelka_line = strelka.readline().rstrip()
         while strelka_line.startswith('#'):
             strelka_line = strelka.readline().rstrip()
-    
+
     if sniper:
         sniper = genome.open_textfile(sniper)
         sniper_line = sniper.readline().rstrip()
         while sniper_line.startswith('#'):
             sniper_line = sniper.readline().rstrip()
-    
+
     if varscan:
         varscan = genome.open_textfile(varscan)
         varscan_line = varscan.readline().rstrip()
         while varscan_line.startswith('#'):
             varscan_line = varscan.readline().rstrip()
-    
+
     if jsm:
         jsm = genome.open_textfile(jsm)
         jsm_line = jsm.readline().rstrip()
         while jsm_line.startswith('#'):
             jsm_line = jsm.readline().rstrip()
-    
+
     if vardict:
         vardict = genome.open_textfile(vardict)
         vardict_line = vardict.readline().rstrip()
         while vardict_line.startswith('#'):
             vardict_line = vardict.readline().rstrip()
-    
+
     if muse:
         muse = genome.open_textfile(muse)
         muse_line = muse.readline().rstrip()
         while muse_line.startswith('#'):
             muse_line = muse.readline().rstrip()
-    
+
     if lofreq:
         lofreq = genome.open_textfile(lofreq)
         lofreq_line = lofreq.readline().rstrip()
         while lofreq_line.startswith('#'):
             lofreq_line = lofreq.readline().rstrip()
-            
+
     if scalpel:
         scalpel = genome.open_textfile(scalpel)
         scalpel_line = scalpel.readline().rstrip()
         while scalpel_line.startswith('#'):
             scalpel_line = scalpel.readline().rstrip()
 
-    
-    
+
+
     # Get through all the headers:
     while my_line.startswith('#') or my_line.startswith('track='):
         my_line = my_sites.readline().rstrip()
-    
+
     # First line:
     outhandle.write( out_header.replace('{','').replace('}','')  + '\n' )
-    
+
     while my_line:
-        
+
         # If VCF, get all the variants with the same coordinate into a list:
         if is_vcf:
-            
+
             my_vcf = genome.Vcf_line( my_line )
             my_coordinates = [(my_vcf.chromosome, my_vcf.position)]
-            
+
             variants_at_my_coordinate = []
-            
+
             alt_bases = my_vcf.altbase.split(',')
             for alt_i in alt_bases:
                 vcf_i = copy(my_vcf)
                 vcf_i.altbase = alt_i
                 variants_at_my_coordinate.append( vcf_i )
 
-            
+
             # As long as the "coordinate" stays the same, it will keep reading until it's different.
             while my_coordinates[0] == (my_vcf.chromosome, my_vcf.position):
 
@@ -365,37 +374,37 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                 my_vcf = genome.Vcf_line( my_line )
 
                 if my_coordinates[0] == (my_vcf.chromosome, my_vcf.position):
-                    
+
                     alt_bases = my_vcf.altbase.split(',')
                     for alt_i in alt_bases:
-                        
+
                         vcf_i = copy(my_vcf)
                         vcf_i.altbase = alt_i
-                        variants_at_my_coordinate.append( vcf_i )     
-        
+                        variants_at_my_coordinate.append( vcf_i )
+
         elif is_bed:
             bed_item = my_line.split('\t')
             my_coordinates = genomic_coordinates( bed_item[0], int(bed_item[1])+1, int(bed_item[2]) )
-            
+
         elif is_pos:
             pos_item = my_line.split('\t')
             my_coordinates = genomic_coordinates( pos_item[0], int(pos_item[1]), int(pos_item[1]) )
-            
+
         elif fai_file:
             fai_item = my_line.split('\t')
             my_coordinates = genomic_coordinates( fai_item[0], 1, int(fai_item[1]) )
-        
+
         ##### ##### ##### ##### ##### #####
         for my_coordinate in my_coordinates:
-            
-            ######## If VCF, can get ref base, variant base, as well as other identifying information ######## 
+
+            ######## If VCF, can get ref base, variant base, as well as other identifying information ########
             if is_vcf:
-                
+
                 ref_bases = []
                 alt_bases = []
                 indel_lengths = []
                 all_my_identifiers = []
-                
+
                 for variant_i in variants_at_my_coordinate:
 
                     ref_base = variant_i.refbase
@@ -405,33 +414,33 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                     ref_bases.append( ref_base )
                     alt_bases.append( first_alt )
                     indel_lengths.append( indel_length )
-                    
+
                     # Extract these information if they exist in the VCF file, but they could be re-written if dbSNP/COSMIC are supplied.
                     if_dbsnp  = 1 if re.search(r'rs[0-9]+', variant_i.identifier) else 0
                     if_cosmic = 1 if re.search(r'COS[MN][0-9]+', variant_i.identifier) else 0
                     if_common = 1 if variant_i.get_info_value('COMMON') == '1' else 0
                     num_cases = variant_i.get_info_value('CNT') if variant_i.get_info_value('CNT') else nan
-                    
+
                     if variant_i.identifier == '.':
                         my_identifier_i = set()
                     else:
                         my_identifier_i = variant_i.identifier.split(';')
                         my_identifier_i = set( my_identifier_i )
-                    
+
                     all_my_identifiers.append( my_identifier_i )
-                                
-            ## If not, 1) get ref_base, first_alt from other VCF files. 
+
+            ## If not, 1) get ref_base, first_alt from other VCF files.
             #          2) Create placeholders for dbSNP and COSMIC that can be overwritten with dbSNP/COSMIC VCF files (if provided)
             else:
                 variants_at_my_coordinate = [None] # Just to have something to iterate
                 ref_base = first_alt = indel_length = None
-                
+
                 # Could be re-written if dbSNP/COSMIC are supplied. If not, they will remain NaN.
                 if_dbsnp = if_cosmic = if_common = num_cases = nan
 
             # Keep track of NumCallers:
             num_callers = 0
-            
+
             #################################### Find the same coordinate in those VCF files ####################################
             if args.mutect_vcf:        got_mutect,  mutect_variants,  mutect_line  = genome.find_vcf_at_coordinate(my_coordinate, mutect_line,  mutect,  chrom_seq)
             if args.strelka_vcf:       got_strelka, strelka_variants, strelka_line = genome.find_vcf_at_coordinate(my_coordinate, strelka_line, strelka, chrom_seq)
@@ -445,11 +454,11 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
             if args.ground_truth_vcf:  got_truth,   truth_variants,   truth_line   = genome.find_vcf_at_coordinate(my_coordinate, truth_line,   truth,   chrom_seq)
             if args.dbsnp_vcf:         got_dbsnp,   dbsnp_variants,   dbsnp_line   = genome.find_vcf_at_coordinate(my_coordinate, dbsnp_line,   dbsnp,   chrom_seq)
             if args.cosmic_vcf:        got_cosmic,  cosmic_variants,  cosmic_line  = genome.find_vcf_at_coordinate(my_coordinate, cosmic_line,  cosmic,  chrom_seq)
-            
-            
+
+
             # Now, use pysam to look into the BAM file(s), variant by variant from the input:
             for ith_call, my_call in enumerate( variants_at_my_coordinate ):
-                
+
                 if is_vcf:
                     # The particular line in the input VCF file:
                     variant_id = ( (my_call.chromosome, my_call.position), my_call.refbase, my_call.altbase )
@@ -458,7 +467,7 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                     first_alt      = alt_bases[ith_call]
                     indel_length   = indel_lengths[ith_call]
                     my_identifiers = all_my_identifiers[ith_call]
-                    
+
                 else:
                     variant_id = ( (my_coordinate[0], my_coordinate[1]), ref_base, first_alt )
 
@@ -470,7 +479,7 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
 
                         mutect_variant_i = mutect_variants[variant_id]
                         mutect_classification = 1 if (mutect_variant_i.get_info_value('SOMATIC') or 'PASS' in mutect_variant_i.filters) else 0
-                        
+
                         # MuTect2 has some useful information:
                         rpa    = mutect2_RPA(mutect_variant_i)
                         nlod   = mutect2_nlod(mutect_variant_i)
@@ -481,7 +490,7 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         maxED  = mutect2_maxED(mutect_variant_i)
                         minED  = mutect2_minED(mutect_variant_i)
                         rpa    = sum(rpa)/len(rpa)
-                        
+
                         # If ref_base, first_alt, and indel_length unknown, get it here:
                         if not ref_base:         ref_base = mutect_variant_i.refbase
                         if not first_alt:        first_alt = mutect_variant_i.altbase
@@ -501,25 +510,25 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
 
                 #################### Collect Strelka ####################:
                 if args.strelka_vcf:
-                    
+
                     if variant_id in strelka_variants:
-                        
+
                         strelka_variant_i = strelka_variants[variant_id]
                         strelka_classification = 1 if 'PASS' in strelka_variant_i.filters else 0
                         somatic_evs = strelka_variant_i.get_info_value('SomaticEVS')
                         qss = strelka_variant_i.get_info_value('QSS')
                         tqss = strelka_variant_i.get_info_value('TQSS')
-                        
+
                     else:
                         strelka_classification = 0
                         somatic_evs = qss = tqss = nan
-                        
+
                 else:
                     strelka_classification = nan
                     somatic_evs = qss = tqss = nan
-                        
-                
-                
+
+
+
                 #################### Collect VarScan ####################:
                 if args.varscan_vcf:
 
@@ -533,7 +542,7 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         if not ref_base:         ref_base = varscan_variant_i.refbase
                         if not first_alt:        first_alt = varscan_variant_i.altbase
                         if indel_length == None: indel_length = len(first_alt) - len(ref_base)
-                        
+
                     else:
                         varscan_classification = 0
                         score_varscan2 = nan
@@ -545,9 +554,9 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
 
                 #################### Collect JointSNVMix ####################:
                 if args.jsm_vcf:
-                    
+
                     if variant_id in jsm_variants:
-                        
+
                         jsm_variant_i = jsm_variants[ variant_id ]
                         jointsnvmix2_classification = 1
                         aaab = float( jsm_variant_i.get_info_value('AAAB') )
@@ -559,21 +568,21 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         if not ref_base:         ref_base = jsm_variant_i.refbase
                         if not first_alt:        first_alt = jsm_variant_i.altbase
                         if indel_length == None: indel_length = len(first_alt) - len(ref_base)
-                        
+
                     else:
                         jointsnvmix2_classification = 0
                         score_jointsnvmix2 = nan
-                        
+
                     num_callers += jointsnvmix2_classification
                 else:
                     jointsnvmix2_classification = score_jointsnvmix2 = nan
 
-                
+
                 #################### Collect SomaticSniper ####################:
                 if args.somaticsniper_vcf:
-                    
+
                     if variant_id in sniper_variants:
-                        
+
                         sniper_variant_i = sniper_variants[ variant_id ]
                         sniper_classification = 1 if sniper_variant_i.get_sample_value('SS', idxT) == '2' else 0
                         if sniper_classification == 1:
@@ -586,29 +595,29 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         if not ref_base:         ref_base = sniper_variant_i.refbase
                         if not first_alt:        first_alt = sniper_variant_i.altbase
                         if indel_length == None: indel_length = len(first_alt) - len(ref_base)
-                            
+
                     else:
                         sniper_classification = 0
                         score_somaticsniper = nan
-                        
+
                     num_callers += sniper_classification
                 else:
                     sniper_classification = score_somaticsniper = nan
-                
-                
+
+
                 #################### Collect VarDict ####################:
                 if args.vardict_vcf:
-                    
+
                     if variant_id in vardict_variants:
-                        
+
                         vardict_variant_i = vardict_variants[ variant_id ]
-                        
+
                         if (vardict_variant_i.filters == 'PASS') and ('Somatic' in vardict_variant_i.info):
                             vardict_classification = 1
-                        
+
                         elif 'Somatic' in vardict_variant_i.info:
                             vardict_filters = vardict_variant_i.filters.split(';')
-                            
+
                             disqualifying_filters = ('d7' in vardict_filters or 'd5' in vardict_filters) or \
                             ('DIFF0.2' in vardict_filters) or \
                             ('LongAT' in vardict_filters) or \
@@ -619,18 +628,18 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                             ('SN1.5' in vardict_filters) or \
                             ( 'P0.05' in vardict_filters and float(vardict_variant_i.get_info_value('SSF') ) >= 0.15 ) or \
                             ( ('v3' in vardict_filters or 'v4' in vardict_filters) and int(vardict_variant_i.get_sample_value('VD', 0))<3 )
-                        
+
                             no_bad_filter = not disqualifying_filters
                             filter_fail_times = len(vardict_filters)
-                        
+
                             if no_bad_filter and filter_fail_times<=2:
                                 vardict_classification = 0.5
                             else:
                                 vardict_classification = 0
-                                
+
                         else:
                             vardict_classification = 0
-                            
+
                         # Somatic Score:
                         score_vardict = vardict_variant_i.get_info_value('SSF')
                         if score_vardict:
@@ -638,38 +647,38 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                             score_vardict = genome.p2phred(score_vardict, max_phred=100)
                         else:
                             score_vardict = nan
-    
+
                         # MSI, MSILEN, and SHIFT3:
                         msi    = find_MSI(vardict_variant_i)
                         msilen = find_MSILEN(vardict_variant_i)
-                        shift3 = find_SHIFT3(vardict_variant_i)                        
+                        shift3 = find_SHIFT3(vardict_variant_i)
 
                         # If ref_base, first_alt, and indel_length unknown, get it here:
                         if not ref_base:         ref_base = vardict_variant_i.refbase
                         if not first_alt:        first_alt = vardict_variant_i.altbase
                         if indel_length == None: indel_length = len(first_alt) - len(ref_base)
-                        
+
                     else:
                         vardict_classification = 0
                         msi = msilen = shift3 = score_vardict = nan
-                    
+
                     num_callers += vardict_classification
-                    
+
                 else:
                     vardict_classification = msi = msilen = shift3 = score_vardict = nan
 
 
                 #################### Collect MuSE ####################:
                 if args.muse_vcf:
-                    
+
                     if variant_id in muse_variants:
-                        
+
                         muse_variant_i = muse_variants[ variant_id ]
-                        
+
                         if muse_variant_i.filters   == 'PASS':
                             muse_classification = 1
                         elif muse_variant_i.filters == 'Tier1':
-                            muse_classification = 0.9                        
+                            muse_classification = 0.9
                         elif muse_variant_i.filters == 'Tier2':
                             muse_classification = 0.8
                         elif muse_variant_i.filters == 'Tier3':
@@ -685,21 +694,21 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         if not ref_base:         ref_base = muse_variant_i.refbase
                         if not first_alt:        first_alt = muse_variant_i.altbase
                         if indel_length == None: indel_length = len(first_alt) - len(ref_base)
-                            
+
                     else:
                         muse_classification = 0
-                    
+
                     num_callers += muse_classification
-                
+
                 else:
                     muse_classification = nan
-            
-            
+
+
                 #################### Collect LoFreq ####################:
                 if args.lofreq_vcf:
-                    
+
                     if variant_id in lofreq_variants:
-                        
+
                         lofreq_variant_i = lofreq_variants[ variant_id ]
                         lofreq_classification = 1 if lofreq_variant_i.filters == 'PASS' else 0
 
@@ -707,23 +716,23 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         if not ref_base:         ref_base = lofreq_variant_i.refbase
                         if not first_alt:        first_alt = lofreq_variant_i.altbase
                         if indel_length == None: indel_length = len(first_alt) - len(ref_base)
-                        
+
                     else:
                         lofreq_classification = 0
-                        
+
                     num_callers += lofreq_classification
-                    
+
                 else:
                     lofreq_classification = nan
-                    
+
 
                 #################### Collect Scalpel ####################:
                 if args.scalpel_vcf:
-                    
+
                     if variant_id in scalpel_variants:
-                        
+
                         scalpel_variant_i = scalpel_variants[ variant_id ]
-                        
+
                         if scalpel_variant_i.get_info_value('SOMATIC'):
                             if scalpel_variant_i.filters == 'PASS':
                                 scalpel_classification = 1
@@ -739,15 +748,15 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
 
                     else:
                         scalpel_classification = 0
-                    
+
                     num_callers += scalpel_classification
                 else:
                     scalpel_classification = nan
-                
-                            
+
+
                 # Potentially write the output only if it meets this threshold:
                 if num_callers >= args.minimum_num_callers:
-                                        
+
                     ########## Ground truth file ##########
                     if args.ground_truth_vcf:
                         if variant_id in truth_variants.keys():
@@ -775,18 +784,18 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         else:
                             if_dbsnp = if_common = 0
 
-                    
+
                     ########## COSMIC ########## Will overwrite COSMIC info from input VCF file
                     if args.cosmic_vcf:
                         if variant_id in cosmic_variants.keys():
 
                             cosmic_variant_i = cosmic_variants[variant_id]
-                            
+
                             # If designated as SNP, make it "non-cosmic" and make CNT=nan.
                             if cosmic_variant_i.get_info_value('SNP'):
                                 if_cosmic = 0
                                 num_cases = nan
-                            
+
                             else:
                                 if_cosmic = 1
                                 num_cases = cosmic_variant_i.get_info_value('CNT')
@@ -796,303 +805,303 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                             cosmicID = cosmic_variant_i.identifier.split(',')
                             for ID_i in cosmicID:
                                 my_identifiers.add( ID_i )
-                                
+
                         else:
                             if_cosmic = num_cases = 0
-                    
-                        
+
+
                     ########## ######### ######### INFO EXTRACTION FROM BAM FILES ########## ######### #########
                     # Normal BAM file:
                     n_reads = nbam.fetch( my_coordinate[0], my_coordinate[1]-1, my_coordinate[1] )
-    
+
                     n_ref_read_mq = []
                     n_alt_read_mq = []
                     n_ref_read_bq = []
                     n_alt_read_bq = []
-                    
+
                     n_ref_edit_distance = []
                     n_alt_edit_distance = []
-                    
+
                     n_ref_concordant_reads = n_alt_concordant_reads = n_ref_discordant_reads = n_alt_discordant_reads = 0
                     n_ref_for = n_ref_rev = n_alt_for = n_alt_rev = N_dp = 0
                     n_ref_SC_reads = n_alt_SC_reads = n_ref_notSC_reads = n_alt_notSC_reads = 0
                     n_MQ0 = 0
-                    
+
                     n_ref_pos_from_end = []
                     n_alt_pos_from_end = []
                     n_ref_flanking_indel = []
                     n_alt_flanking_indel = []
-                    
+
                     n_noise_read_count = n_poor_read_count  = 0
-                    
+
                     for read_i in n_reads:
                         if not read_i.is_unmapped and dedup_test(read_i):
-                            
+
                             N_dp += 1
-                            
+
                             code_i, ith_base, base_call_i, indel_length_i, flanking_indel_i = position_of_aligned_read(read_i, my_coordinate[1]-1 )
-                            
+
                             if read_i.mapping_quality < min_mq and mean(read_i.query_qualities) < min_bq:
                                 n_poor_read_count += 1
-                            
+
                             if read_i.mapping_quality == 0:
                                 n_MQ0 += 1
-                            
+
                             # Reference calls:
                             if code_i == 1 and base_call_i == ref_base[0]:
-                            
+
                                 n_ref_read_mq.append( read_i.mapping_quality )
                                 n_ref_read_bq.append( read_i.query_qualities[ith_base] )
-                                
+
                                 try:
                                     n_ref_edit_distance.append( read_i.get_tag('NM') )
                                 except KeyError:
                                     pass
-                                
+
                                 # Concordance
                                 if        read_i.is_proper_pair  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_ref_concordant_reads += 1
                                 elif (not read_i.is_proper_pair) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_ref_discordant_reads += 1
-                                
+
                                 # Orientation
                                 if (not read_i.is_reverse) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_ref_for += 1
                                 elif    read_i.is_reverse  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_ref_rev += 1
-                                
+
                                 # Soft-clipped reads?
                                 if read_i.cigar[0][0] == cigar_soft_clip or read_i.cigar[-1][0] == cigar_soft_clip:
                                     n_ref_SC_reads += 1
                                 else:
                                     n_ref_notSC_reads += 1
-                                                                        
+
                                 # Distance from the end of the read:
                                 if ith_base != None:
                                     n_ref_pos_from_end.append( min(ith_base, read_i.query_length-ith_base) )
-                                    
+
                                 # Flanking indels:
                                 n_ref_flanking_indel.append( flanking_indel_i )
-    
-                            
+
+
                             # Alternate calls:
                             # SNV, or Deletion, or Insertion where I do not check for matching indel length
                             elif (indel_length == 0 and code_i == 1 and base_call_i == first_alt) or \
                                  (indel_length < 0  and code_i == 2 and indel_length == indel_length_i) or \
                                  (indel_length > 0  and code_i == 3):
-                                
+
                                 n_alt_read_mq.append( read_i.mapping_quality )
                                 n_alt_read_bq.append( read_i.query_qualities[ith_base] )
-                                
+
                                 try:
                                     n_alt_edit_distance.append( read_i.get_tag('NM') )
                                 except KeyError:
                                     pass
-                                
+
                                 # Concordance
                                 if        read_i.is_proper_pair  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_alt_concordant_reads += 1
                                 elif (not read_i.is_proper_pair) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_alt_discordant_reads += 1
-                                
+
                                 # Orientation
                                 if (not read_i.is_reverse) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_alt_for += 1
                                 elif    read_i.is_reverse  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     n_alt_rev += 1
-                                
+
                                 # Soft-clipped reads?
                                 if read_i.cigar[0][0] == cigar_soft_clip or read_i.cigar[-1][0] == cigar_soft_clip:
                                     n_alt_SC_reads += 1
                                 else:
                                     n_alt_notSC_reads += 1
-    
+
                                 # Distance from the end of the read:
                                 if ith_base != None:
                                     n_alt_pos_from_end.append( min(ith_base, read_i.query_length-ith_base) )
-                                                        
+
                                 # Flanking indels:
                                 n_alt_flanking_indel.append( flanking_indel_i )
-                            
-                            
+
+
                             # Inconsistent read or 2nd alternate calls:
                             else:
                                 n_noise_read_count += 1
-                                    
+
                     # Done extracting info from tumor BAM. Now tally them:
                     n_ref_mq        = mean(n_ref_read_mq)
                     n_alt_mq        = mean(n_alt_read_mq)
                     n_z_ranksums_mq = stats.ranksums(n_alt_read_mq, n_ref_read_mq)[0]
-                    
+
                     n_ref_bq        = mean(n_ref_read_bq)
                     n_alt_bq        = mean(n_alt_read_bq)
                     n_z_ranksums_bq = stats.ranksums(n_alt_read_bq, n_ref_read_bq)[0]
-                    
+
                     n_ref_NM        = mean(n_ref_edit_distance)
                     n_alt_NM        = mean(n_alt_edit_distance)
                     n_z_ranksums_NM = stats.ranksums(n_alt_edit_distance, n_ref_edit_distance)[0]
                     n_NM_Diff       = n_alt_NM - n_ref_NM - abs(indel_length)
-                    
+
                     n_concordance_fet = stats.fisher_exact(( (n_ref_concordant_reads, n_alt_concordant_reads), (n_ref_discordant_reads, n_alt_discordant_reads) ))[1]
                     n_strandbias_fet  = stats.fisher_exact(( (n_ref_for, n_alt_for), (n_ref_rev, n_alt_rev) ))[1]
                     n_clipping_fet    = stats.fisher_exact(( (n_ref_notSC_reads, n_alt_notSC_reads), (n_ref_SC_reads, n_alt_SC_reads) ))[1]
-                    
+
                     n_z_ranksums_endpos = stats.ranksums(n_alt_pos_from_end, n_ref_pos_from_end)[0]
-                    
+
                     n_ref_indel_1bp = n_ref_flanking_indel.count(1)
                     n_ref_indel_2bp = n_ref_flanking_indel.count(2) + n_ref_indel_1bp
                     n_ref_indel_3bp = n_ref_flanking_indel.count(3) + n_ref_indel_2bp + n_ref_indel_1bp
                     n_alt_indel_1bp = n_alt_flanking_indel.count(1)
                     n_alt_indel_2bp = n_alt_flanking_indel.count(2) + n_alt_indel_1bp
                     n_alt_indel_3bp = n_alt_flanking_indel.count(3) + n_alt_indel_2bp + n_alt_indel_1bp
-        
-                    
+
+
                     ########################################################################################
                     # Tumor BAM file:
                     t_reads = tbam.fetch( my_coordinate[0], my_coordinate[1]-1, my_coordinate[1] )
-                    
+
                     t_ref_read_mq = []
                     t_alt_read_mq = []
                     t_ref_read_bq = []
                     t_alt_read_bq = []
                     t_ref_edit_distance = []
                     t_alt_edit_distance = []
-                    
+
                     t_ref_concordant_reads = t_alt_concordant_reads = t_ref_discordant_reads = t_alt_discordant_reads = 0
                     t_ref_for = t_ref_rev = t_alt_for = t_alt_rev = T_dp = 0
                     t_ref_SC_reads = t_alt_SC_reads = t_ref_notSC_reads = t_alt_notSC_reads = 0
                     t_MQ0 = 0
-                    
+
                     t_ref_pos_from_end = []
                     t_alt_pos_from_end = []
                     t_ref_flanking_indel = []
                     t_alt_flanking_indel = []
-                    
+
                     t_noise_read_count = t_poor_read_count  = 0
-                    
+
                     for read_i in t_reads:
                         if not read_i.is_unmapped and dedup_test(read_i):
-                            
+
                             T_dp += 1
-                            
+
                             code_i, ith_base, base_call_i, indel_length_i, flanking_indel_i = position_of_aligned_read(read_i, my_coordinate[1]-1 )
-                            
+
                             if read_i.mapping_quality < min_mq and mean(read_i.query_qualities) < min_bq:
                                 t_poor_read_count += 1
-                            
+
                             if read_i.mapping_quality == 0:
                                 t_MQ0 += 1
-                            
+
                             # Reference calls:
                             if code_i == 1 and base_call_i == ref_base[0]:
-                            
+
                                 t_ref_read_mq.append( read_i.mapping_quality )
                                 t_ref_read_bq.append( read_i.query_qualities[ith_base] )
-                                
+
                                 try:
                                     t_ref_edit_distance.append( read_i.get_tag('NM') )
                                 except KeyError:
                                     pass
-                                
+
                                 # Concordance
                                 if        read_i.is_proper_pair  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_ref_concordant_reads += 1
                                 elif (not read_i.is_proper_pair) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_ref_discordant_reads += 1
-                                
+
                                 # Orientation
                                 if (not read_i.is_reverse) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_ref_for += 1
                                 elif    read_i.is_reverse  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_ref_rev += 1
-                                
+
                                 # Soft-clipped reads?
                                 if read_i.cigar[0][0] == cigar_soft_clip or read_i.cigar[-1][0] == cigar_soft_clip:
                                     t_ref_SC_reads += 1
                                 else:
                                     t_ref_notSC_reads += 1
-    
+
                                 # Distance from the end of the read:
                                 if ith_base != None:
                                     t_ref_pos_from_end.append( min(ith_base, read_i.query_length-ith_base) )
-                                    
+
                                 # Flanking indels:
                                 t_ref_flanking_indel.append( flanking_indel_i )
-    
-                            
+
+
                             # Alternate calls:
                             # SNV, or Deletion, or Insertion where I do not check for matching indel length
                             elif (indel_length == 0 and code_i == 1 and base_call_i == first_alt) or \
                                  (indel_length < 0  and code_i == 2 and indel_length == indel_length_i) or \
                                  (indel_length > 0  and code_i == 3):
-                                
+
                                 t_alt_read_mq.append( read_i.mapping_quality )
                                 t_alt_read_bq.append( read_i.query_qualities[ith_base] )
-                                
+
                                 try:
                                     t_alt_edit_distance.append( read_i.get_tag('NM') )
                                 except KeyError:
                                     pass
-                                
+
                                 # Concordance
                                 if        read_i.is_proper_pair  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_alt_concordant_reads += 1
                                 elif (not read_i.is_proper_pair) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_alt_discordant_reads += 1
-                                
+
                                 # Orientation
                                 if (not read_i.is_reverse) and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_alt_for += 1
                                 elif    read_i.is_reverse  and read_i.mapping_quality >= min_mq and read_i.query_qualities[ith_base] >= min_bq:
                                     t_alt_rev += 1
-                                
+
                                 # Soft-clipped reads?
                                 if read_i.cigar[0][0] == cigar_soft_clip or read_i.cigar[-1][0] == cigar_soft_clip:
                                     t_alt_SC_reads += 1
                                 else:
                                     t_alt_notSC_reads += 1
-    
+
                                 # Distance from the end of the read:
                                 if ith_base != None:
                                     t_alt_pos_from_end.append( min(ith_base, read_i.query_length-ith_base) )
-                                                        
+
                                 # Flanking indels:
                                 t_alt_flanking_indel.append( flanking_indel_i )
-                            
-                            
+
+
                             # Inconsistent read or 2nd alternate calls:
                             else:
                                 t_noise_read_count += 1
-                                    
-                    
+
+
                     # Done extracting info from tumor BAM. Now tally them:
                     t_ref_mq        = mean(t_ref_read_mq)
                     t_alt_mq        = mean(t_alt_read_mq)
                     t_z_ranksums_mq = stats.ranksums(t_alt_read_mq, t_ref_read_mq)[0]
-                    
+
                     t_ref_bq        = mean(t_ref_read_bq)
                     t_alt_bq        = mean(t_alt_read_bq)
                     t_z_ranksums_bq = stats.ranksums(t_alt_read_bq, t_ref_read_bq)[0]
-                    
+
                     t_ref_NM        = mean(t_ref_edit_distance)
                     t_alt_NM        = mean(t_alt_edit_distance)
                     t_z_ranksums_NM = stats.ranksums(t_alt_edit_distance, t_ref_edit_distance)[0]
                     t_NM_Diff       = t_alt_NM - t_ref_NM - abs(indel_length)
-                    
+
                     t_concordance_fet = stats.fisher_exact(( (t_ref_concordant_reads, t_alt_concordant_reads), (t_ref_discordant_reads, t_alt_discordant_reads) ))[1]
                     t_strandbias_fet  = stats.fisher_exact(( (t_ref_for, t_alt_for), (t_ref_rev, t_alt_rev) ))[1]
                     t_clipping_fet    = stats.fisher_exact(( (t_ref_notSC_reads, t_alt_notSC_reads), (t_ref_SC_reads, t_alt_SC_reads) ))[1]
-                    
+
                     t_z_ranksums_endpos = stats.ranksums(t_alt_pos_from_end, t_ref_pos_from_end)[0]
-                    
+
                     t_ref_indel_1bp = t_ref_flanking_indel.count(1)
                     t_ref_indel_2bp = t_ref_flanking_indel.count(2) + t_ref_indel_1bp
                     t_ref_indel_3bp = t_ref_flanking_indel.count(3) + t_ref_indel_2bp + t_ref_indel_1bp
                     t_alt_indel_1bp = t_alt_flanking_indel.count(1)
                     t_alt_indel_2bp = t_alt_flanking_indel.count(2) + t_alt_indel_1bp
                     t_alt_indel_3bp = t_alt_flanking_indel.count(3) + t_alt_indel_2bp + t_alt_indel_1bp
-        
-                    
+
+
                     # Odds Ratio (just like VarDict, but get from BAM)
                     sor_numerator   = (n_alt_for + n_alt_rev) * (t_ref_for + t_ref_rev)
                     sor_denominator = (n_ref_for + n_ref_rev) * (t_alt_for + t_alt_rev)
@@ -1104,26 +1113,26 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                         sor = sor_numerator / sor_denominator
                         if sor >= 100:
                             sor = 100
-                    
+
                     ############################################################################################
                     ############################################################################################
                     # Homopolymer eval (Make sure to modify for INDEL):
                     # The min and max is to prevent the +/- 20 bases from exceeding the reference sequence
                     lseq  = ref_fa.fetch(my_coordinate[0], max(0, my_coordinate[1]-20), my_coordinate[1])
                     rseq  = ref_fa.fetch(my_coordinate[0], my_coordinate[1]+1, min(ref_fa.get_reference_length(my_coordinate[0])+1, my_coordinate[1]+21) )
-                    
+
                     # This is to get around buy in old version of pysam that reads the reference sequence in bytes instead of strings
                     lseq = lseq.decode() if isinstance(lseq, bytes) else lseq
                     rseq = rseq.decode() if isinstance(rseq, bytes) else rseq
-                    
+
                     seq41_ref = lseq + ref_base  + rseq
                     seq41_alt = lseq + first_alt + rseq
-                    
+
                     ref_counts = genome.count_repeating_bases(seq41_ref)
                     alt_counts = genome.count_repeating_bases(seq41_alt)
-                    
+
                     homopolymer_length = max( max(ref_counts), max(alt_counts) )
-                    
+
                     # Homopolymer spanning the variant site:
                     ref_c = 0
                     alt_c = 0
@@ -1132,32 +1141,32 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                             ref_c += 1
                         else:
                             break
-                            
+
                     for i in lseq[::-1]:
                         if i == ref_base:
                             ref_c += 1
                         else:
                             break
-                    
+
                     for i in rseq:
                         if i == first_alt:
                             alt_c += 1
                         else:
                             break
-                            
+
                     for i in lseq[::-1]:
                         if i == first_alt:
                             alt_c += 1
                         else:
                             break
-        
+
                     site_homopolymer_length = max( alt_c+1, ref_c+1 )
-        
+
                     if my_identifiers:
                         my_identifiers = ';'.join(my_identifiers)
                     else:
                         my_identifiers = '.'
-                        
+
                     ###
                     out_line = out_header.format( \
                     CHROM                   = my_coordinate[0],                                       \
@@ -1267,14 +1276,14 @@ with genome.open_textfile(mysites) as my_sites, open(outfile, 'w') as outhandle:
                     tBAM_ALT_InDel_1bp      = t_alt_indel_1bp,                                        \
                     InDel_Length            = indel_length,                                           \
                     TrueVariant_or_False    = judgement )
-                    
+
                     # Print it out to stdout:
                     outhandle.write(out_line + '\n')
-        
+
         # Read into the next line:
         if not is_vcf:
             my_line = my_sites.readline().rstrip()
-        
+
     ##########  Close all open files if they were opened  ##########
     opened_files = (ref_fa, nbam, tbam, truth, cosmic, dbsnp, mutect, strelka, sniper, varscan, jsm, vardict, muse, lofreq, scalpel)
     [opened_file.close() for opened_file in opened_files if opened_file]
